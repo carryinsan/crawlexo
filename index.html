@@ -214,6 +214,15 @@ pre{white-space:pre-wrap;font-size:11px;background:#06080d;border:1px solid #1a2
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  function safeHref(value) {
+    try {
+      const url = new URL(String(value ?? '').trim());
+      if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password) return '#';
+      return url.href;
+    } catch {
+      return '#';
+    }
+  }
   const ms = value => Number.isFinite(Number(value)) ? `${Math.round(Number(value))} ms` : '—';
   let payload = null;
   let busy = false;
