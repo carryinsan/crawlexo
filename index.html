@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Arix Crawler 4.0 — AI-Agent Web Retrieval</title>
+<style>
+:root{
+  --bg:#07090d;--card:rgba(14,18,25,0.85);--border:#202938;--border-active:#3b475d;
+  --text:#f5f7fb;--muted:#8793a6;--accent:#63e6a5;--warn:#f5c96a;--bad:#ff7b87;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);background:var(--bg);line-height:1.5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 85% -15%,#172033 0,transparent 40%),#07090d;min-height:100vh}
+.shell{width:min(1280px,calc(100% - 36px));margin:auto;padding:36px 0 80px}
+.top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:24px}
+.eyebrow{font-size:10px;letter-spacing:.16em;font-weight:900;color:var(--muted);text-transform:uppercase}
+h1{font-size:clamp(34px,5.2vw,64px);line-height:.98;letter-spacing:-.05em;margin:8px 0 0}
+h1 span{color:#8a96a8}
+.status{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:8px 14px;color:#aab5c5;font-size:11px;font-weight:800;letter-spacing:.08em}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.card{border:1px solid var(--border);background:var(--card);border-radius:20px;box-shadow:0 18px 70px rgba(0,0,0,.35);padding:22px}
+.searchbox{display:flex;gap:10px;margin-top:14px}
+.input{flex:1;background:#090c11;border:1px solid #2a3444;color:#fff;border-radius:13px;padding:14px 16px;font:inherit;font-size:15px;outline:none}
+.input:focus{border-color:#5c6c84;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.btn{border:0;border-radius:13px;padding:14px 24px;background:#f5f7fb;color:#07090d;font-weight:900;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:7px;transition:opacity .15s}
+.btn:hover{opacity:.92}
+.btn:disabled{opacity:.4;cursor:wait}
+.btn-ghost{background:#151c27;color:#dce5f2;border:1px solid #253043}
+.btn-ghost:hover{background:#1d2737}
+.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.control-item label{display:block;font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--muted);margin-bottom:6px;text-transform:uppercase}
+.select{width:100%;background:#090c11;border:1px solid #2a3444;color:#fff;border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;outline:none}
+.filter-row{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #1a2230}
+.chk{display:inline-flex;gap:8px;align-items:center;font-size:12px;font-weight:700;color:#c3cfdf;cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.progress{height:4px;background:#151b24;border-radius:99px;overflow:hidden;margin-top:16px}
+.bar{height:100%;width:0;background:var(--accent);transition:width .15s linear}
+.telemetry{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin:20px 0;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.telemetry div{background:#0c1016;padding:14px 12px;min-width:0}
+.telemetry small{display:block;color:var(--muted);font-size:9px;letter-spacing:.11em;font-weight:900}
+.telemetry strong{display:block;margin-top:4px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:24px 0 12px}
+.summary h2{margin:0;font-size:22px}
+.actions-row{display:flex;gap:10px}
+.result{border:1px solid var(--border);background:var(--card);border-radius:18px;margin-top:14px;overflow:hidden}
+.resultHead{display:flex;justify-content:space-between;gap:20px;padding:18px 20px;border-bottom:1px solid var(--border)}
+.resultHead h3{margin:6px 0;font-size:19px;line-height:1.25}
+.url{color:#8491a5;font-size:12px;overflow-wrap:anywhere;text-decoration:none}
+.url:hover{color:var(--accent);text-decoration:underline}
+.scoreBadge{min-width:68px;height:68px;border:1px solid #2e3a4e;border-radius:14px;background:#0c1016;display:grid;place-content:center;text-align:center;flex:none}
+.scoreBadge b{font-size:20px;color:var(--accent)}
+.scoreBadge span{font-size:9px;color:var(--muted);font-weight:800}
+.meta{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border)}
+.meta span{padding:4px 9px;background:#131923;border:1px solid #252f3e;border-radius:7px;color:#a1adc0;font-size:11px}
+.meta .pill-strong{border-color:#2a5e42;color:#63e6a5;background:#0d261a}
+.meta .pill-likely{border-color:#485e2a;color:#d8e663;background:#1d260d}
+.meta .pill-partial{border-color:#5e4a2a;color:#e6b363;background:#261d0d}
+.content{padding:20px;font-size:14px;line-height:1.8;color:#d9dee7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:560px;overflow:auto;background:#090d13;border-bottom:1px solid #1a2230}
+details{border-top:1px solid var(--border);padding:14px 20px;color:#8995a8}
+summary{cursor:pointer;font-size:11px;font-weight:800}
+pre{white-space:pre-wrap;font-size:11px;background:#06080d;border:1px solid #1a2230;border-radius:10px;padding:12px;margin-top:8px;overflow:auto}
+.toast{position:fixed;right:24px;bottom:24px;background:#121924;border:1px solid #2d3b50;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}
+.toast.show{opacity:1;pointer-events:auto}
+.hidden{display:none!important}
+@media(max-width:960px){.controls{grid-template-columns:repeat(2,1fr)}.telemetry{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.shell{padding-top:20px}.top{display:block}.searchbox{flex-direction:column}.controls{grid-template-columns:1fr}.telemetry{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="top">
+  <div>
+    <div class="eyebrow">ARIX CRAWLER 4.0 · AI-AGENT WEB RETRIEVAL</div>
+    <h1>Search the web.<br><span>Return the evidence.</span></h1>
+  </div>
+  <div class="status"><i id="statusDot"></i><span id="statusText">READY</span></div>
+</header>
+
+<section class="card">
+<div style="display: flex; gap: 8px; margin-bottom: 14px;">
+  <button id="tabQuery" type="button" class="btn" style="padding: 7px 16px; font-size: 12px;">Query Search</button>
+  <button id="tabCustom" type="button" class="btn btn-ghost" style="padding: 7px 16px; font-size: 12px;">Direct URLs</button>
+</div>
+
+<!-- Mode 1: Search Query -->
+<div id="queryBox">
+  <div class="eyebrow">ENTER SEARCH QUERY</div>
+  <div class="searchbox">
+    <input id="query" class="input" placeholder="e.g. todays news india or transformer architecture in deep learning" autocomplete="off" autofocus>
+    <button id="searchBtn" class="btn">Search & Crawl Full Pages</button>
+  </div>
+</div>
+
+<!-- Mode 2: Custom URL Direct Paste -->
+<div id="customBox" class="hidden">
+  <div class="eyebrow">PASTE DIRECT URLS (ONE PER LINE; UP TO 40)</div>
+  <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <textarea id="customUrls" class="input" rows="4" style="resize: vertical; font-family: monospace; font-size: 13px;" placeholder="https://www.quora.com/topic-example&#10;https://www.justdial.com/page-example, https://example.com/another"></textarea>
+    <button id="crawlCustomBtn" class="btn" style="align-self: flex-start;">Retrieve Direct URLs</button>
+  </div>
+</div>
+
+  <div class="controls">
+    <div class="control-item">
+      <label for="mode">Retrieval Mode</label>
+      <select id="mode" class="select">
+        <option value="quick">Quick</option>
+        <option value="balanced" selected>Balanced</option>
+        <option value="deep">Deep</option>
+        <option value="maximum">Maximum coverage</option>
+      </select>
+    </div>
+    <div class="control-item">
+      <label for="type">Explicit Source Type</label>
+      <select id="type" class="select">
+        <option value="web" selected>Web</option>
+        <option value="news">News</option>
+        <option value="academic">Academic</option>
+        <option value="doc">Documents</option>
+        <option value="gov">Government</option>
+        <option value="video">Video</option>
+      </select>
+    </div>
+    <div class="control-item">
+      <label for="count">Search Result Count</label>
+      <select id="count" class="select">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="40">40</option>
+      </select>
+    </div>
+    <div class="control-item">
+      <label for="searchEndpoint">Agent Retrieval Endpoint</label>
+      <input id="searchEndpoint" class="select" value="/api/retrieve" spellcheck="false">
+    </div>
+    <div class="control-item">
+      <label for="depth">Recursive Crawl Depth</label>
+      <select id="depth" class="select">
+        <option value="0" selected>Search result pages only</option>
+        <option value="1">1 level</option>
+        <option value="2">2 levels</option>
+        <option value="3">3 levels</option>
+      </select>
+    </div>
+    <div class="control-item">
+      <label for="maxPages">Maximum Pages</label>
+      <select id="maxPages" class="select">
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="40">40</option>
+        
+      </select>
+    </div>
+  </div>
+  <div class="control-item" style="margin-top:14px">
+    <label for="queries">Additional exact agent queries (optional; one per line)</label>
+    <textarea id="queries" class="input" rows="2" placeholder="The exact original query above is used unchanged. Add additional independent queries here, one per line."></textarea>
+  </div>
+  <div class="filter-row" style="margin-top:12px">
+    <span class="eyebrow">Search providers:</span>
+    <label class="chk"><input type="checkbox" name="provider" value="google" checked> Google</label>
+    <label class="chk"><input type="checkbox" name="provider" value="bing" checked> Bing</label>
+    <label class="chk"><input type="checkbox" name="provider" value="brave" checked> Brave</label>
+  </div>
+  <div class="filter-row" style="margin-top:8px">
+    <span class="eyebrow">Specialized source APIs:</span>
+    <label class="chk"><input type="checkbox" name="source" value="openalex"> OpenAlex</label>
+    <label class="chk"><input type="checkbox" name="source" value="crossref"> Crossref</label>
+    <label class="chk"><input type="checkbox" name="source" value="europepmc"> Europe PMC</label>
+    <label class="chk"><input type="checkbox" name="source" value="arxiv"> arXiv</label>
+  </div>
+
+  <div class="hint" style="margin-top:14px">The AI agent owns query creation. Arix executes each supplied query unchanged, ranks provider results, then retrieves full content through the hardened extraction service. Failed and blocked pages stay in the response with reasons.</div>
+
+  <div class="progress"><div class="bar" id="progressBar"></div></div>
+</section>
+
+<!-- Detailed Latency & Pipeline Telemetry -->
+<section class="telemetry">
+  <div><small>SEARCH LATENCY</small><strong id="tSearch">—</strong></div>
+  <div><small>EXTRACTION LATENCY</small><strong id="tExtract">—</strong></div>
+  <div><small>TOTAL LATENCY</small><strong id="tTotal">—</strong></div>
+  <div><small>SUCCESSFUL</small><strong id="tOk" style="color:var(--accent)">0</strong></div>
+  <div><small>FAILED / BLOCKED</small><strong id="tFailed" style="color:var(--bad)">0</strong></div>
+  <div><small>RECURSIVE PAGES</small><strong id="tDiscarded">0</strong></div>
+  <div><small>AVG MATCH SCORE</small><strong id="tQuality">—</strong></div>
+</section>
+
+<section id="resultsSection" class="hidden">
+  <div class="summary">
+    <h2>Full Extracted Pages (<span id="resultsCount">0</span>)</h2>
+    <div class="actions-row">
+      <button id="copyJsonBtn" class="btn btn-ghost">Copy Full JSON</button>
+      <button id="viewJsonBtn" class="btn btn-ghost">Toggle Raw JSON</button>
+    </div>
+  </div>
+
+  <div id="rawJsonBox" class="card hidden" style="margin-bottom:16px">
+    <pre id="rawJsonContent" style="max-height:400px"></pre>
+  </div>
+
+  <div id="cards"></div>
+</section>
+</main>
+
+<div id="toast" class="toast">JSON copied to clipboard!</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const ms = value => Number.isFinite(Number(value)) ? `${Math.round(Number(value))} ms` : '—';
+  let payload = null;
+  let busy = false;
+
+  function status(message, state = 'ready') {
+    $('statusText').textContent = message;
+    $('statusDot').style.background = state === 'error' ? 'var(--bad)' : state === 'busy' ? 'var(--warn)' : 'var(--accent)';
+    $('searchBtn').disabled = state === 'busy';
+    $('crawlCustomBtn').disabled = state === 'busy';
+  }
+  function reset() {
+    $('resultsSection').classList.add('hidden');
+    $('cards').replaceChildren();
+    $('rawJsonBox').classList.add('hidden');
+    $('progressBar').style.width = '0%';
+    ['tSearch','tExtract','tTotal','tQuality'].forEach(id => $(id).textContent = '—');
+    ['tOk','tFailed','tDiscarded'].forEach(id => $(id).textContent = '0');
+    $('tSearch').textContent = '—';
+    payload = null;
+  }
+  function selected(name) {
+    return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(node => node.value);
+  }
+  function queryList(primary) {
+    const extras = $('queries').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    return [...new Set([primary, ...extras])].slice(0, 8);
+  }
+  function scoreBand(value) {
+    const n = Number(value || 0);
+    return n >= 78 ? 'Strong match' : n >= 52 ? 'Likely relevant' : n >= 30 ? 'Partial match' : 'Low relevance';
+  }
+  function render(pages) {
+    const container = $('cards');
+    container.replaceChildren();
+    $('resultsCount').textContent = pages.length;
+    if (!pages.length) {
+      container.innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">No sources were returned. Inspect the raw response and provider diagnostics.</div>';
+      $('resultsSection').classList.remove('hidden');
+      return;
+    }
+    for (const [index, item] of pages.entries()) {
+      const article = document.createElement('article');
+      article.className = 'result';
+      const content = item.contentAvailable && item.content
+        ? `<details open><summary>Extracted page content · ${Number(item.contentWordCount || 0).toLocaleString()} words</summary><div class="content">${esc(item.content)}</div></details>`
+        : `<div class="content">No full page content returned. ${esc(item.extraction?.error?.message || item.extraction?.error?.code || item.contentStatus || 'No extraction result.')}</div>`;
+      const providers = (item.providers || []).join(', ') || item.source || 'direct URL';
+      const warnings = (item.warnings || []).map(w => `<span class="pill">${esc(w)}</span>`).join(' ');
+      const trace = {
+        relevance: item.relevance || null,
+        providerRanks: item.providerRanks || {},
+        matchedQueries: item.matchedQueries || [],
+        extraction: item.extraction || null,
+        warnings: item.warnings || []
+      };
+      article.innerHTML = `
+        <div class="resultHead"><div>
+          <div class="eyebrow">#${index + 1} · ${esc(item.domain || hostOf(item.finalUrl || item.url))}</div>
+          <h3>${esc(item.title || 'Untitled source')}</h3>
+          <a class="url" href="${esc(safeHref(item.finalUrl || item.url))}" target="_blank" rel="noopener noreferrer">${esc(item.finalUrl || item.url)}</a>
+        </div><div class="scoreBadge"><b>${item.relevanceScore == null ? '—' : `${Math.round(Number(item.relevanceScore))}%`}</b><span>${esc(scoreBand(item.relevanceScore))}</span></div></div>
+        <div class="meta"><span>${esc(providers)}</span><span>${esc(item.contentStatus || 'metadata only')}</span><span>${esc(item.contentFormat || 'unknown format')}</span><span>${Number(item.contentWordCount || 0).toLocaleString()} words</span><span>Extraction quality ${item.extractionQuality ?? '—'}/100</span><span>HTTP ${item.httpStatus ?? '—'}</span><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;margin-left:auto" data-copy-url="${esc(item.url)}">Copy URL</button><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" data-copy-content="${index}">Copy content</button></div>
+        <p class="snippet">${esc(item.snippet || item.description || 'No provider snippet.')}</p>
+        ${warnings ? `<div class="meta">${warnings}</div>` : ''}
+        ${content}
+        <details><summary>Source provenance & extraction diagnostics</summary><pre>${esc(JSON.stringify(trace, null, 2))}</pre></details>`;
+      container.appendChild(article);
+    }
+    container.querySelectorAll('[data-copy-url]').forEach(button => button.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(button.dataset.copyUrl); toast('Source URL copied.'); } catch { toast('Clipboard permission unavailable.'); }
+    }));
+    container.querySelectorAll('[data-copy-content]').forEach(button => button.addEventListener('click', async () => {
+      const item = pages[Number(button.dataset.copyContent)];
+      try { await navigator.clipboard.writeText(item.content || ''); toast('Extracted content copied.'); } catch { toast('Clipboard permission unavailable.'); }
+    }));
+    $('resultsSection').classList.remove('hidden');
+  }
+  function toast(message) {
+    $('toast').textContent = message;
+    $('toast').classList.add('show');
+    setTimeout(() => $('toast').classList.remove('show'), 2200);
+  }
+  async function send(body) {
+    if (busy) return;
+    busy = true;
+    reset();
+    status('RETRIEVING SOURCES & PAGE CONTENT', 'busy');
+    const totalStart = performance.now();
+    $('progressBar').style.width = '12%';
+    try {
+      const endpoint = $('searchEndpoint').value.trim() || '/api/retrieve';
+      const searchStart = performance.now();
+      const response = await fetch(endpoint, {
+        method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+      $('tSearch').textContent = ms(data.search?.latencyMs ?? (performance.now() - searchStart));
+      $('progressBar').style.width = '85%';
+      if (!response.ok || !data.ok) throw new Error(data.error || data.message || `Retrieval returned HTTP ${response.status}`);
+      payload = data;
+      const pages = data.results || [];
+      const successful = pages.filter(item => item.contentAvailable).length;
+      const failed = pages.length - successful;
+      $('tExtract').textContent = ms(Math.max(0, (data.latencyMs || 0) - (data.search?.latencyMs || 0)));
+      $('tTotal').textContent = ms(performance.now() - totalStart);
+      $('tOk').textContent = String(successful);
+      $('tFailed').textContent = String(failed);
+      $('tDiscarded').textContent = String(data.recursivePages || 0);
+      const scores = pages.map(item => Number(item.relevanceScore)).filter(Number.isFinite);
+      $('tQuality').textContent = scores.length ? `${Math.round(scores.reduce((a,b) => a+b, 0) / scores.length)}%` : '—';
+      $('rawJsonContent').textContent = JSON.stringify(data, null, 2);
+      $('progressBar').style.width = '100%';
+      render(pages);
+      status(failed ? `COMPLETE · ${successful} CONTENT / ${failed} FAILED` : `COMPLETE · ${successful} SOURCES`);
+    } catch (error) {
+      status(`FAILED · ${error.message || 'Request error'}`, 'error');
+      $('rawJsonContent').textContent = JSON.stringify({ ok: false, error: error.message || String(error) }, null, 2);
+      $('resultsSection').classList.remove('hidden');
+    } finally {
+      busy = false;
+      $('searchBtn').disabled = false;
+      $('crawlCustomBtn').disabled = false;
+    }
+  }
+  function search() {
+    const query = $('query').value.trim();
+    if (query.length < 2) { $('query').focus(); return toast('Enter a query with at least two characters.'); }
+    const queries = queryList(query);
+    const depth = Number($('depth').value || 0);
+    const count = Number($('count').value || 10);
+    send({
+      query,
+      ...(queries.length > 1 ? { queries } : {}),
+      count,
+      fetchCount: count,
+      mode: $('mode').value,
+      type: $('type').value,
+      providers: selected('provider'),
+      sources: selected('source'),
+      deep: $('mode').value === 'deep' || $('mode').value === 'maximum',
+      fetchContent: true,
+      depth,
+      maxPages: depth ? Number($('maxPages').value || count) : count,
+      sameDomain: true,
+      includeAiContext: true
+    });
+  }
+  function directCrawl() {
+    const urls = $('customUrls').value.split(/[\s,]+/).map(x => x.trim()).filter(Boolean).map(x => /^https?:\/\//i.test(x) ? x : `https://${x}`);
+    if (!urls.length) { $('customUrls').focus(); return toast('Paste at least one URL.'); }
+    const depth = Number($('depth').value || 0);
+    send({ urls: [...new Set(urls)].slice(0, 40), fetchContent: true, depth, maxPages: depth ? Number($('maxPages').value || 40) : Math.min(40, urls.length), sameDomain: true, includeAiContext: true });
+  }
+  $('searchBtn').addEventListener('click', search);
+  $('query').addEventListener('keydown', event => { if (event.key === 'Enter') search(); });
+  $('crawlCustomBtn').addEventListener('click', directCrawl);
+  $('tabQuery').addEventListener('click', () => { $('queryBox').classList.remove('hidden'); $('customBox').classList.add('hidden'); $('tabQuery').className = 'btn'; $('tabCustom').className = 'btn btn-ghost'; });
+  $('tabCustom').addEventListener('click', () => { $('customBox').classList.remove('hidden'); $('queryBox').classList.add('hidden'); $('tabCustom').className = 'btn'; $('tabQuery').className = 'btn btn-ghost'; });
+  $('copyJsonBtn').addEventListener('click', async () => { if (!payload) return; try { await navigator.clipboard.writeText(JSON.stringify(payload, null, 2)); toast('Full retrieval JSON copied.'); } catch { toast('Clipboard permission unavailable.'); } });
+  $('viewJsonBtn').addEventListener('click', () => $('rawJsonBox').classList.toggle('hidden'));
+})();
+</script>
+</body>
+</html>
