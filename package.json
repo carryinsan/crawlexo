@@ -3,10 +3,12 @@
   "version": "4.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test tests/*.test.js",
     "check": "node scripts/check.mjs",
-    "build": "npm run check && npm test"
+    "build": "npm run check && npm test && node scripts/build.mjs"
   }
 }
